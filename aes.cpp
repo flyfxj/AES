@@ -48,7 +48,7 @@ bool AES_C::encode(char *p, char *key){
             shiftRows(byteArr);
             if(10 == i){
                 //another encode round.
-                addRoundKey(byteArr, i);
+                addRoundKey(byteArr, i + 1);
             }else{
                 mixColumn(byteArr);
             }
@@ -58,8 +58,48 @@ bool AES_C::encode(char *p, char *key){
     }
 }
 
-bool AES_C::decode(){
+bool AES_C::decode(char *p, char *key){
+    //check
+    if(NULL == p || NULL == key){
+        return false;
+    }
+    if(16 != strlen(key)){
+        printf("the lenth of key is not 16");
+        return false;
+    }
+    int nLen = strlen(p);
 
+    if(0 != nLen % 16){
+        printf("the lenth of text % 16 is not 0");
+        return false;
+    }
+    //extend the key.
+    if(!extendKey(key)){
+        return false;
+    }
+
+    byte byteArr[CONST_SZ_NUM][CONST_SZ_NUM];
+    for(int k = 0; k < nLen; k += CONST_SZ_NUM_SQURE){
+        //get source char array to encode
+        memcpy(byteArr, p + k, CONST_SZ_NUM_SQURE);
+
+        for(int i = 10; i > 0 ; i--){
+            if(10 == i){
+                //another encode round.
+                addRoundKey(byteArr, i + 1);
+            }else{
+                demixColumn(byteArr);
+            }
+            //row shift.
+            deshiftRows(byteArr);
+            //bytes exchange.
+            desubBytes(byteArr);
+            //a encode round.
+            addRoundKey(byteArr, i);
+        }
+        //copy encode char array to origin c
+        memcpy(p + k, byteArr, CONST_SZ_NUM_SQURE);
+    }
 }
 
 void init(){
@@ -85,6 +125,10 @@ bool AES_C::extendKey(char* pStrOriKey){
             *((bytes4*)m_nKeyWArr[i]) = *((bytes4*)m_nKeyWArr[i - CONST_SZ_NUM]) ^ *((bytes4*)m_nKeyWArr[i - 1]);
         }
     }
+    for(int i = 0; i < 44; i++){
+        for(int j = 0; j < CONST_SZ_NUM; j ++)
+        printf("0x%02x ", m_nKeyWArr[i][j] & 0xff);
+    }
     return true;
 }
 
@@ -99,10 +143,10 @@ bytes4 AES_C::T(byte byteArr[CONST_SZ_NUM], int round){
     byte tmpByteArr[CONST_SZ_NUM];
     memcpy(tmpByteArr, byteArr, CONST_SZ_NUM);
     //left shift 1 byte
-    leftLoop4int(tmpByteArr,CONST_SZ_NUM,1);
+    leftLoop(tmpByteArr,1);
     //byte exchange.
     for(int i = 0; i < 4 ; i++){
-        tmpByteArr[i] = getByteFromSBox(tmpByteArr[i]);
+        tmpByteArr[i] = getByteFromSBox(tmpByteArr[i], true);
     }
     //get bytes4
     bytes4 result = 0;
@@ -111,70 +155,73 @@ bytes4 AES_C::T(byte byteArr[CONST_SZ_NUM], int round){
 }
 
 //replace 1 byte
-byte AES_C::getByteFromSBox(byte originByte){
+byte AES_C::getByteFromSBox(byte originByte, bool bCode){
     int row = (int)(originByte >> 4);
     int col = (int)(originByte & 0x0f);
-    return VAL::S[row][col];
+    if(bCode){
+        return VAL::S[row][col];    
+    }else{
+        return VAL::S1[row][col];
+    }
 }
 
-//replace 4 byte
-void AES_C::subBytes(byte byteArr[CONST_SZ_NUM][CONST_SZ_NUM]){
-    if(NULL == byteArr){
-        return;
-    }
+void AES_C::replayceBytes(byte byteArr[CONST_SZ_NUM][CONST_SZ_NUM], bool bCode){
     for(int i = 0; i < CONST_SZ_NUM; i++){
         for(int j = 0; j < CONST_SZ_NUM; j++){
-            byteArr[i][j] = getByteFromSBox(byteArr[i][j]);
+            byteArr[i][j] = getByteFromSBox(byteArr[i][j], bCode);
         }
     }
 }
 
+//replace 4 byte
+void AES_C::subBytes(byte byteArr[CONST_SZ_NUM][CONST_SZ_NUM]){
+    replayceBytes(byteArr, true);
+}
+//decode replace 4 byte
+void AES_C::desubBytes(byte byteArr[CONST_SZ_NUM][CONST_SZ_NUM]){
+    replayceBytes(byteArr, false);
+}
 
 //left shift nShiftPos bytes
-void AES_C::leftLoop4int(byte* byteArray, unsigned int nLen, unsigned int nShiftPos){
+void AES_C::leftLoop(byte* byteArray, unsigned int nShiftPos){
     if(NULL == byteArray){
         return;
     }
-    byte* temp = new byte[nLen];
-    if(NULL == temp){
-        return;
-    }
-    memcpy(temp,byteArray,nLen);
-    unsigned int index = nShiftPos % nLen;
+    unsigned int index = nShiftPos % CONST_SZ_NUM;
     if(0 == index){
         return;
     }
-    for(int i = 0; i < nLen; i++){
+    byte temp[CONST_SZ_NUM];
+    memcpy(temp,byteArray,CONST_SZ_NUM);
+    for(int i = 0; i < CONST_SZ_NUM; i++){
         byteArray[i] = temp[index];
         index++;
-        index = index % nLen;
+        index = index % CONST_SZ_NUM;
     }
-    delete [] temp;
 }
 
+void AES_C::shiftRow(byte byteArr[CONST_SZ_NUM][CONST_SZ_NUM], int index, unsigned int shiftPos){
+    byte row[CONST_SZ_NUM];
+    memcpy(row, byteArr + sizeof(byte) * CONST_SZ_NUM * index, CONST_SZ_NUM);
+    leftLoop(row, shiftPos);
+    memcpy(byteArr + sizeof(byte) * CONST_SZ_NUM * index, row, CONST_SZ_NUM);
 
+}
 //shift Rows
 void AES_C::shiftRows(byte byteArr[CONST_SZ_NUM][CONST_SZ_NUM]) {
-    if(NULL == byteArr){
-        return;
+    //index = 0, no need to shift
+    for(int i = 1; i < CONST_SZ_NUM; i ++){
+        shiftRow(byteArr, i, (unsigned int)i);
     }
-    byte rowTwo[CONST_SZ_NUM], rowThree[CONST_SZ_NUM], rowFour[CONST_SZ_NUM];
-    //复制状态矩阵的第2,3,4行
-    memcpy(rowTwo, byteArr + sizeof(byte) * CONST_SZ_NUM * 1, CONST_SZ_NUM);
-    memcpy(rowThree, byteArr + sizeof(byte) * CONST_SZ_NUM * 2, CONST_SZ_NUM);
-    memcpy(rowFour, byteArr + sizeof(byte) * CONST_SZ_NUM * 3, CONST_SZ_NUM);
+}
 
-    //循环左移相应的位数
-    leftLoop4int(rowTwo, CONST_SZ_NUM, 1);
-    leftLoop4int(rowThree, CONST_SZ_NUM, 2);
-    leftLoop4int(rowFour, CONST_SZ_NUM, 3);
-
-    //把左移后的行复制回状态矩阵中
-    memcpy(byteArr + sizeof(byte) * CONST_SZ_NUM * 1, rowTwo, CONST_SZ_NUM);
-    memcpy(byteArr + sizeof(byte) * CONST_SZ_NUM * 2, rowThree, CONST_SZ_NUM);
-    memcpy(byteArr + sizeof(byte) * CONST_SZ_NUM * 3, rowFour, CONST_SZ_NUM);    
-
- }
+//decode shift Rows
+void AES_C::deshiftRows(byte byteArr[CONST_SZ_NUM][CONST_SZ_NUM]) {
+    //index = 0, no need to shift
+    for(int i = 1; i < CONST_SZ_NUM; i ++){
+        shiftRow(byteArr, i, (unsigned int)(CONST_SZ_NUM - i));
+    }
+}
 
 byte AES_C::GFMul2(byte s){
     //get the number of first bit;
@@ -259,6 +306,19 @@ void AES_C::mixColumn(byte byteArr[CONST_SZ_NUM][CONST_SZ_NUM]){
         }
     }
 }
+
+void AES_C::demixColumn(byte byteArr[CONST_SZ_NUM][CONST_SZ_NUM]){
+    byte tempArray[CONST_SZ_NUM][CONST_SZ_NUM] = {0};
+
+    memcpy(tempArray, byteArr, CONST_SZ_NUM_SQURE * sizeof(byte));
+
+    for(int i = 0; i < CONST_SZ_NUM; i++){
+        for(int j = 0; j < CONST_SZ_NUM; j++){
+            byteArr[i][j] = GFMul(VAL::decolM[i][0],tempArray[0][j]) ^ GFMul(VAL::decolM[i][1],tempArray[1][j]) ^ GFMul(VAL::decolM[i][2],tempArray[2][j]) ^ GFMul(VAL::decolM[i][3], tempArray[3][j]);
+        }
+    }
+}
+
 
 void AES_C::addRoundKey(byte byteArr[CONST_SZ_NUM][CONST_SZ_NUM], int round){
     for(int i = 0; i< CONST_SZ_NUM; i++){

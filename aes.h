@@ -32,7 +32,7 @@ namespace VAL{
         {0x8c, 0xa1, 0x89, 0x0d, 0xbf, 0xe6, 0x42, 0x68, 0x41, 0x99, 0x2d, 0x0f, 0xb0, 0x54, 0xbb, 0x16}
     };
 
-    static const int S2[16][16] = { 
+    static const int S1[16][16] = { 
         {0x52, 0x09, 0x6a, 0xd5, 0x30, 0x36, 0xa5, 0x38, 0xbf, 0x40, 0xa3, 0x9e, 0x81, 0xf3, 0xd7, 0xfb},
         {0x7c, 0xe3, 0x39, 0x82, 0x9b, 0x2f, 0xff, 0x87, 0x34, 0x8e, 0x43, 0x44, 0xc4, 0xde, 0xe9, 0xcb},
         {0x54, 0x7b, 0x94, 0x32, 0xa6, 0xc2, 0x23, 0x3d, 0xee, 0x4c, 0x95, 0x0b, 0x42, 0xfa, 0xc3, 0x4e},
@@ -57,6 +57,13 @@ namespace VAL{
         {1, 1, 2, 3},
         {3, 1, 1, 2}
     };
+
+    static const int decolM[4][4] = { 
+        {0xe, 0xb, 0xd, 0x9},
+        {0x9, 0xe, 0xb, 0xd},
+        {0xd, 0x9, 0xe, 0xb},
+        {0xb, 0xd, 0x9, 0xe} 
+    };
 };
 
 class AES_C{
@@ -67,17 +74,25 @@ public:
     //encode main function
     bool encode(char* p = NULL, char* key = NULL);
     //decode main function
-    bool decode();
+    bool decode(char* p = NULL, char* key = NULL);
 private:
     void init();
     bool extendKey(char* pStrOriKey = NULL);
+
     bytes4 getBytes4FromString(char* pStrOriKey, int nStart);
     void splitBytes4toBytesArr(bytes4 num, byte* byteArr);
+
     bytes4 T(byte byteArr[CONST_SZ_NUM], int round);
-    void leftLoop4int(byte* byteArray, unsigned int nLen, unsigned int nShiftPos);
-    byte getByteFromSBox(byte originByte);
+
+    void leftLoop(byte* byteArray, unsigned int nShiftPos);
+    void shiftRow(byte byteArr[CONST_SZ_NUM][CONST_SZ_NUM], int index, unsigned int shiftPos);
     void shiftRows(byte byteArr[CONST_SZ_NUM][CONST_SZ_NUM]);
+    void deshiftRows(byte byteArr[CONST_SZ_NUM][CONST_SZ_NUM]);
+
     void subBytes(byte byteArr[CONST_SZ_NUM][CONST_SZ_NUM]);
+    void desubBytes(byte byteArr[CONST_SZ_NUM][CONST_SZ_NUM]);
+    void replayceBytes(byte byteArr[CONST_SZ_NUM][CONST_SZ_NUM], bool bCode);
+    byte getByteFromSBox(byte originByte, bool bCode);
 
     byte GFMul2(byte s);
     byte GFMul3(byte s);
@@ -89,8 +104,9 @@ private:
     byte GFMul13(byte s);
     byte GFMul14(byte s);
     byte GFMul(int n, byte s);
-
     void mixColumn(byte byteArr[CONST_SZ_NUM][CONST_SZ_NUM]);
+    void demixColumn(byte byteArr[CONST_SZ_NUM][CONST_SZ_NUM]);
+
     void addRoundKey(byte byteArr[CONST_SZ_NUM][CONST_SZ_NUM], int round);
 private:
     byte m_nKeyWArr[44][CONST_SZ_NUM];
