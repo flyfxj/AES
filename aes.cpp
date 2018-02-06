@@ -39,7 +39,7 @@ bool AES_C::encode(char *p, char *key){
         //get source char array to encode
         memcpy(byteArr, p + k, CONST_SZ_NUM_SQURE);
 
-        for(int i = 0; i < 10 ; i++){
+        for(int i = 0; i < 1 ; i++){
             //a encode round.
             addRoundKey(byteArr, i);
             //bytes exchange.
@@ -156,8 +156,8 @@ bytes4 AES_C::T(byte byteArr[CONST_SZ_NUM], int round){
 
 //replace 1 byte
 byte AES_C::getByteFromSBox(byte originByte, bool bCode){
-    int row = (int)(originByte >> 4);
-    int col = (int)(originByte & 0x0f);
+    unsigned int row = (unsigned int)((originByte >> 4) & 0x0f);
+    unsigned int col = (unsigned int)(originByte & 0x0f);
     if(bCode){
         return VAL::S[row][col];    
     }else{

@@ -5,8 +5,10 @@ int main()
 {
     printf("printf test.\n");
     AES_C aes;
-    char key[17] = "1234567890ABCDEF";
-    char p[33] = "1234567890ABCDEF1234567890ABCDEF";
+    //char key[17] = "1234567890ABCDEF";
+    //char p[33] = "1234567890ABCDEF1234567890ABCDEF";
+    byte key[16] = {(byte)0x3C,(byte)0xA1,(byte)0x0B,(byte)0x21,(byte)0x57,(byte)0xF0 ,(byte)0x19 ,(byte)0x16 ,(byte)0x90 ,(byte)0x2E ,(byte)0x13 ,(byte)0x80 ,(byte)0xAC ,(byte)0xC1 ,(byte)0x07 ,(byte)0xBD} ;
+    char p[17] = "1234567890ABCDEF";
 
     printf("key: %s\n", key);
     printf("origin text: %s\n", p);
