@@ -85,7 +85,6 @@ private:
     bytes4 T(byte byteArr[CONST_SZ_NUM], int round);
 
     void leftLoop(byte* byteArray, unsigned int nShiftPos);
-    void shiftRow(byte byteArr[CONST_SZ_NUM][CONST_SZ_NUM], int index, unsigned int shiftPos);
     void shiftRows(byte byteArr[CONST_SZ_NUM][CONST_SZ_NUM]);
     void deshiftRows(byte byteArr[CONST_SZ_NUM][CONST_SZ_NUM]);
 

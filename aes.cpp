@@ -29,7 +29,7 @@ bool AES_C::encode(char *p, char *key){
         printf("the lenth of text % 16 is not 0");
         return false;
     }
-    //extend the key.
+    //extend the key. verify OK
     if(!extendKey(key)){
         return false;
     }
@@ -40,11 +40,11 @@ bool AES_C::encode(char *p, char *key){
         memcpy(byteArr, p + k, CONST_SZ_NUM_SQURE);
 
         for(int i = 0; i < 1 ; i++){
-            //a encode round.
-            addRoundKey(byteArr, i);
-            //bytes exchange.
+            //a encode round. verify OK
+            addRoundKey(byteArr, i); 
+            //bytes exchange. verify OK
             subBytes(byteArr);
-            //row shift.
+            //row shift. verify OK
             shiftRows(byteArr);
             if(10 == i){
                 //another encode round.
@@ -200,18 +200,11 @@ void AES_C::leftLoop(byte* byteArray, unsigned int nShiftPos){
     }
 }
 
-void AES_C::shiftRow(byte byteArr[CONST_SZ_NUM][CONST_SZ_NUM], int index, unsigned int shiftPos){
-    byte row[CONST_SZ_NUM];
-    memcpy(row, byteArr + sizeof(byte) * CONST_SZ_NUM * index, CONST_SZ_NUM);
-    leftLoop(row, shiftPos);
-    memcpy(byteArr + sizeof(byte) * CONST_SZ_NUM * index, row, CONST_SZ_NUM);
-
-}
 //shift Rows
 void AES_C::shiftRows(byte byteArr[CONST_SZ_NUM][CONST_SZ_NUM]) {
     //index = 0, no need to shift
     for(int i = 1; i < CONST_SZ_NUM; i ++){
-        shiftRow(byteArr, i, (unsigned int)i);
+        leftLoop(byteArr[i], (unsigned int)i);
     }
 }
 
@@ -219,7 +212,7 @@ void AES_C::shiftRows(byte byteArr[CONST_SZ_NUM][CONST_SZ_NUM]) {
 void AES_C::deshiftRows(byte byteArr[CONST_SZ_NUM][CONST_SZ_NUM]) {
     //index = 0, no need to shift
     for(int i = 1; i < CONST_SZ_NUM; i ++){
-        shiftRow(byteArr, i, (unsigned int)(CONST_SZ_NUM - i));
+        leftLoop(byteArr[i], (unsigned int)(CONST_SZ_NUM - i));
     }
 }
 
