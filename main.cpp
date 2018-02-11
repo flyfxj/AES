@@ -18,18 +18,18 @@ int main()
     }
     printf("\n");
     */
-    printf("\nWArray\n");
+    //printf("\nWArray\n");
     aes.encode(p, key);
 
-    /*
+    
     printf("encode text: %s\n", p);
-    for(int i = 0; i < 32; i++){
+    for(int i = 0; i < 16; i++){
         printf("0x%02x ", *(p + i) & 0xff);
     }
-    */
-    printf("\nWArray\n");
+    
+    //printf("\nWArray\n");
    
-    aes.encode(p, key);
+    aes.decode(p, key);
     printf("\n");
     printf("decode text: %s\n", p);
     printf("\n");

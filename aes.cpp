@@ -33,12 +33,10 @@ bool AES_C::encode(char *p, char *key){
     if(!extendKey(key)){
         return false;
     }
-
     byte byteArr[CONST_SZ_NUM][CONST_SZ_NUM];
     for(int k = 0; k < nLen; k += CONST_SZ_NUM_SQURE){
         //get source char array to encode
         memcpy(byteArr, p + k, CONST_SZ_NUM_SQURE);
-
         for(int i = 0; i < 1 ; i++){
             //a encode round. verify OK
             addRoundKey(byteArr, i); 
@@ -46,10 +44,11 @@ bool AES_C::encode(char *p, char *key){
             subBytes(byteArr);
             //row shift. verify OK
             shiftRows(byteArr);
-            if(10 == i){
+            if(9 == i){
                 //another encode round.
                 addRoundKey(byteArr, i + 1);
             }else{
+                //verify OK
                 mixColumn(byteArr);
             }
         }
@@ -73,29 +72,29 @@ bool AES_C::decode(char *p, char *key){
         printf("the lenth of text % 16 is not 0");
         return false;
     }
-    //extend the key.
+    //extend the key. verify OK
     if(!extendKey(key)){
         return false;
     }
-
     byte byteArr[CONST_SZ_NUM][CONST_SZ_NUM];
     for(int k = 0; k < nLen; k += CONST_SZ_NUM_SQURE){
         //get source char array to encode
         memcpy(byteArr, p + k, CONST_SZ_NUM_SQURE);
 
-        for(int i = 10; i > 0 ; i--){
+        for(int i = 1; i > 0 ; i--){
             if(10 == i){
-                //another encode round.
-                addRoundKey(byteArr, i + 1);
+                //another encode round. verify OK
+                addRoundKey(byteArr, i);
             }else{
+                //verify OK
                 demixColumn(byteArr);
             }
-            //row shift.
+            //row shift. verify OK
             deshiftRows(byteArr);
-            //bytes exchange.
-            desubBytes(byteArr);
-            //a encode round.
-            addRoundKey(byteArr, i);
+            //bytes exchange. verify OK
+            desubBytes(byteArr); 
+            //a encode round. verify OK
+            addRoundKey(byteArr, i - 1);
         }
         //copy encode char array to origin c
         memcpy(p + k, byteArr, CONST_SZ_NUM_SQURE);
@@ -125,10 +124,12 @@ bool AES_C::extendKey(char* pStrOriKey){
             *((bytes4*)m_nKeyWArr[i]) = *((bytes4*)m_nKeyWArr[i - CONST_SZ_NUM]) ^ *((bytes4*)m_nKeyWArr[i - 1]);
         }
     }
+    /*
     for(int i = 0; i < 44; i++){
         for(int j = 0; j < CONST_SZ_NUM; j ++)
         printf("0x%02x ", m_nKeyWArr[i][j] & 0xff);
     }
+    */
     return true;
 }
 
@@ -288,6 +289,14 @@ byte AES_C::GFMul(int n, byte s) {
     return result;
 }
 
+void AES_C::unitMixColumn(){
+    byte tempArray[CONST_SZ_NUM][CONST_SZ_NUM] = {0};
+    for(int i = 0; i < CONST_SZ_NUM; i++){
+        for(int j = 0; j < CONST_SZ_NUM; j++){
+            tempArray[i][j] = GFMul(VAL::decolM[i][0], VAL::colM[0][j]) ^ GFMul(VAL::decolM[i][1], VAL::colM[1][j]) ^ GFMul(VAL::decolM[i][2], VAL::colM[2][j]) ^ GFMul(VAL::decolM[i][3], VAL::colM[3][j]);
+        }
+    }
+}
 void AES_C::mixColumn(byte byteArr[CONST_SZ_NUM][CONST_SZ_NUM]){
     byte tempArray[CONST_SZ_NUM][CONST_SZ_NUM] = {0};
 

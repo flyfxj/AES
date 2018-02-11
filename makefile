@@ -16,4 +16,4 @@ aes.g:aes.cpp aes.h defs.h
 	$g -c aes.cpp
 
 clean:
-	rm aes *.o *.g -rf 
+	rm aes aes-g *.o *.g -rf 

@@ -105,6 +105,7 @@ private:
     byte GFMul(int n, byte s);
     void mixColumn(byte byteArr[CONST_SZ_NUM][CONST_SZ_NUM]);
     void demixColumn(byte byteArr[CONST_SZ_NUM][CONST_SZ_NUM]);
+    void unitMixColumn();
 
     void addRoundKey(byte byteArr[CONST_SZ_NUM][CONST_SZ_NUM], int round);
 private:
